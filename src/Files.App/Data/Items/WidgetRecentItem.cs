@@ -1,7 +1,7 @@
 // Copyright (c) Files Community
 // Licensed under the MIT License.
 
-using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Xaml.Media;
 using Windows.Win32;
 using Windows.Win32.UI.Shell;
 
@@ -12,11 +12,11 @@ namespace Files.App.Data.Items
 	/// </summary>
 	public sealed partial class RecentItem : WidgetCardItem, IEquatable<RecentItem>, IDisposable
 	{
-		private BitmapImage? _Icon;
+		private ImageSource? _Icon;
 		/// <summary>
 		/// Gets or sets thumbnail icon of the recent item.
 		/// </summary>
-		public BitmapImage? Icon
+		public ImageSource? Icon
 		{
 			get => _Icon;
 			set => SetProperty(ref _Icon, value);

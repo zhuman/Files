@@ -5,6 +5,7 @@ using Files.App.ViewModels.Properties;
 using Files.Shared.Helpers;
 using FluentFTP;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System.IO;
 using System.Text;
@@ -83,8 +84,8 @@ namespace Files.App.Utils
 
 		// Note: Never attempt to call this from a secondary window or another thread, create a new instance from CustomIconSource instead
 		// TODO: eventually we should remove this b/c it's not thread safe
-		private BitmapImage customIcon;
-		public BitmapImage CustomIcon
+		private ImageSource customIcon;
+		public ImageSource CustomIcon
 		{
 			get => customIcon;
 			set
@@ -170,15 +171,15 @@ namespace Files.App.Utils
 			get => string.IsNullOrEmpty(SyncStatusUI?.SyncStatusString) ? Strings.CloudDriveSyncStatus_Unknown.GetLocalizedResource() : SyncStatusUI.SyncStatusString;
 		}
 
-		private BitmapImage fileImage;
-		public BitmapImage FileImage
+		private ImageSource fileImage;
+		public ImageSource FileImage
 		{
 			get => fileImage;
 			set
 			{
 				if (SetProperty(ref fileImage, value))
 				{
-					if (value is BitmapImage)
+					if (value is ImageSource)
 					{
 						LoadFileIcon = true;
 						NeedsPlaceholderGlyph = false;
@@ -189,8 +190,8 @@ namespace Files.App.Utils
 
 		public bool IsItemPinnedToStart => StartMenuService.IsPinned((this as IShortcutItem)?.TargetPath ?? ItemPath);
 
-		private BitmapImage iconOverlay;
-		public BitmapImage IconOverlay
+		private ImageSource iconOverlay;
+		public ImageSource IconOverlay
 		{
 			get => iconOverlay;
 			set
@@ -202,8 +203,8 @@ namespace Files.App.Utils
 			}
 		}
 
-		private BitmapImage shieldIcon;
-		public BitmapImage ShieldIcon
+		private ImageSource shieldIcon;
+		public ImageSource ShieldIcon
 		{
 			get => shieldIcon;
 			set

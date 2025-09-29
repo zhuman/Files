@@ -1,7 +1,7 @@
 // Copyright (c) Files Community
 // Licensed under the MIT License.
 
-using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Xaml.Media;
 
 namespace Files.App.Data.Contracts
 {
@@ -9,7 +9,7 @@ namespace Files.App.Data.Contracts
 	{
 		T Item { get; }
 
-		BitmapImage Thumbnail { get; }
+		ImageSource Thumbnail { get; }
 
 		Task LoadCardThumbnailAsync();
 	}

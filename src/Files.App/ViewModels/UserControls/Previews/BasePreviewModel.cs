@@ -3,6 +3,7 @@
 
 using Files.App.ViewModels.Properties;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace Files.App.ViewModels.Previews
@@ -13,8 +14,8 @@ namespace Files.App.ViewModels.Previews
 
 		public ListedItem Item { get; }
 
-		private BitmapImage fileImage;
-		public BitmapImage FileImage
+		private ImageSource fileImage;
+		public ImageSource FileImage
 		{
 			get => fileImage;
 			protected set => SetProperty(ref fileImage, value);

@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Files.App.ViewModels.Properties;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System.IO;
 
@@ -11,7 +12,7 @@ namespace Files.App.ViewModels.Previews
 	{
 		public ListedItem Item { get; }
 
-		public BitmapImage Thumbnail { get; set; } = new();
+		public ImageSource Thumbnail { get; set; } = new BitmapImage();
 
 		private BaseStorageFolder Folder { get; set; }
 

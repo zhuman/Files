@@ -4,15 +4,15 @@
 using Files.App.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Xaml.Media;
 using System.IO;
 
 namespace Files.App.Data.Items
 {
 	public partial class LocationItem : ObservableObject, INavigationControlItem
 	{
-		public BitmapImage icon;
-		public BitmapImage Icon
+		public ImageSource icon;
+		public ImageSource Icon
 		{
 			get => icon;
 			set
@@ -22,7 +22,7 @@ namespace Files.App.Data.Items
 			}
 		}
 
-		public byte[] IconData { get; set; }
+		public MaterializableBitmap IconData { get; set; }
 
 		private string text = "";
 		public string Text

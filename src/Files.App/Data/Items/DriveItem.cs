@@ -4,6 +4,7 @@
 using Files.App.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Storage;
 using Windows.Storage.Streams;
@@ -13,8 +14,8 @@ namespace Files.App.Data.Items
 {
 	public sealed partial class DriveItem : ObservableObject, INavigationControlItem, IFolder
 	{
-		private BitmapImage icon;
-		public BitmapImage Icon
+		private ImageSource icon;
+		public ImageSource Icon
 		{
 			get => icon;
 			set
@@ -24,7 +25,7 @@ namespace Files.App.Data.Items
 			}
 		}
 
-		public byte[] IconData { get; set; }
+		public MaterializableBitmap IconData { get; set; }
 
 		private string path;
 		public string Path
@@ -237,7 +238,7 @@ namespace Files.App.Data.Items
 			var item = new DriveItem();
 
 			if (imageStream is not null)
-				item.IconData = await imageStream.ToByteArrayAsync();
+				item.IconData = MaterializableBitmap.CreateFromFileBytes(await imageStream.ToByteArrayAsync());
 
 			item.Text = type switch
 			{
@@ -343,13 +344,13 @@ namespace Files.App.Data.Items
 			if (Root is not null)
 			{
 				using var thumbnail = await DriveHelpers.GetThumbnailAsync(Root);
-				IconData ??= thumbnail is not null ? await thumbnail.ToByteArrayAsync() : null;
+				IconData ??= thumbnail is not null ? MaterializableBitmap.CreateFromFileBytes(await thumbnail.ToByteArrayAsync()) : null;
 			}
 
 			if (string.Equals(DeviceID, "network-folder"))
-				IconData ??= UIHelpers.GetSidebarIconResourceInfo(Constants.ImageRes.Network)?.IconData;
+				IconData ??= MaterializableBitmap.CreateFromFileBytes(UIHelpers.GetSidebarIconResourceInfo(Constants.ImageRes.Network)?.IconData);
 
-			IconData ??= UIHelpers.GetSidebarIconResourceInfo(Constants.ImageRes.Folder)?.IconData;
+			IconData ??= MaterializableBitmap.CreateFromFileBytes(UIHelpers.GetSidebarIconResourceInfo(Constants.ImageRes.Folder)?.IconData);
 
 			Icon ??= IconData is not null ? await IconData.ToBitmapAsync() : null;
 		}

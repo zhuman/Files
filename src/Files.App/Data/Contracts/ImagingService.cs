@@ -24,9 +24,14 @@ namespace Files.App.Data.Contracts
 			return new BitmapImageModel(await BitmapHelper.ToBitmapAsync(rawData));
 		}
 
+		public async Task<IImage?> GetImageModelFromDataAsync(MaterializableBitmap rawData)
+		{
+			return new BitmapImageModel(await BitmapHelper.ToBitmapAsync(rawData));
+		}
+
 		public async Task<IImage?> GetImageModelFromPathAsync(string filePath, uint thumbnailSize = 64)
 		{
-			if (await FileThumbnailHelper.LoadIconFromPathAsync(filePath, thumbnailSize, ThumbnailMode.ListView, ThumbnailOptions.ResizeThumbnail) is byte[] imageBuffer)
+			if (await FileThumbnailHelper.LoadIconFromPathAsync(filePath, thumbnailSize, ThumbnailMode.ListView, ThumbnailOptions.ResizeThumbnail) is MaterializableBitmap imageBuffer)
 				return await GetImageModelFromDataAsync(imageBuffer);
 
 			return null;

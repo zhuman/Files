@@ -10,7 +10,7 @@ namespace Files.App.Utils.Storage
 		/// <summary>
 		/// Returns icon or thumbnail for given file or folder
 		/// </summary>
-		public static async Task<byte[]?> GetIconAsync(string path, uint requestedSize, bool isFolder, IconOptions iconOptions)
+		public static async Task<MaterializableBitmap?> GetIconAsync(string path, uint requestedSize, bool isFolder, IconOptions iconOptions)
 		{
 			var size = iconOptions.HasFlag(IconOptions.UseCurrentScale) ? requestedSize * App.AppModel.AppWindowDPI : requestedSize;
 			// Ensure size is at least 1 to prevent layout errors
@@ -25,11 +25,11 @@ namespace Files.App.Utils.Storage
 		/// <param name="path"></param>
 		/// <param name="isFolder"></param>
 		/// <returns></returns>
-		public static async Task<byte[]?> GetIconOverlayAsync(string path, bool isFolder)
+		public static async Task<MaterializableBitmap?> GetIconOverlayAsync(string path, bool isFolder)
 			=> await Win32Helper.StartSTATask(() => Win32Helper.GetIconOverlay(path, isFolder));
 
 		[Obsolete]
-		public static async Task<byte[]?> LoadIconFromPathAsync(string filePath, uint thumbnailSize, ThumbnailMode thumbnailMode, ThumbnailOptions thumbnailOptions, bool isFolder = false)
+		public static async Task<MaterializableBitmap?> LoadIconFromPathAsync(string filePath, uint thumbnailSize, ThumbnailMode thumbnailMode, ThumbnailOptions thumbnailOptions, bool isFolder = false)
 		{
 			var result = await GetIconAsync(filePath, thumbnailSize, isFolder, IconOptions.None);
 			return result;

@@ -1,18 +1,18 @@
 ﻿// Copyright (c) Files Community
 // Licensed under the MIT License.
 
-using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Xaml.Media;
 
 namespace Files.App.Data.Items
 {
 	public sealed partial class WidgetDriveCardItem : WidgetCardItem, IWidgetCardItem<DriveItem>, IComparable<WidgetDriveCardItem>
 	{
-		private byte[] thumbnailData;
+		private MaterializableBitmap thumbnailData;
 
 		public new DriveItem Item { get; private set; }
 
-		private BitmapImage thumbnail;
-		public BitmapImage Thumbnail
+		private ImageSource thumbnail;
+		public ImageSource Thumbnail
 		{
 			get => thumbnail;
 			set => SetProperty(ref thumbnail, value);
@@ -35,7 +35,7 @@ namespace Files.App.Data.Items
 			if (result is null)
 			{
 				using var thumbnail = await DriveHelpers.GetThumbnailAsync(Item.Root);
-				result ??= await thumbnail.ToByteArrayAsync();
+				result ??= MaterializableBitmap.CreateFromFileBytes(await thumbnail.ToByteArrayAsync());
 			}
 
 			thumbnailData = result;

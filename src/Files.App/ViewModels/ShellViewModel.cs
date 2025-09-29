@@ -1064,7 +1064,7 @@ namespace Files.App.ViewModels
 			// TODO Remove this property when all the layouts can support different icon sizes
 			var useCurrentScale = folderSettings.LayoutMode == FolderLayoutModes.DetailsView || folderSettings.LayoutMode == FolderLayoutModes.ListView || folderSettings.LayoutMode == FolderLayoutModes.ColumnView || folderSettings.LayoutMode == FolderLayoutModes.CardsView;
 
-			byte[]? result = null;
+			MaterializableBitmap? result = null;
 
 			// Non-cached thumbnails take longer to generate
 			if (item.IsFolder || !FileExtensionHelpers.IsExecutableFile(item.FileExtension))
@@ -1113,7 +1113,7 @@ namespace Files.App.ViewModels
 					// Assign FileImage property
 					var image = await result.ToBitmapAsync();
 					if (image is not null)
-						item.FileImage = image;
+							item.FileImage = image;
 				}, Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal);
 
 				cancellationToken.ThrowIfCancellationRequested();

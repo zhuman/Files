@@ -84,7 +84,7 @@
 						HorizontalAlignment="Center"
 						VerticalAlignment="Center"
 						AutomationProperties.AccessibilityView="Raw"
-						FileIconImageData="{x:Bind ViewModel.IconData, Mode=OneWay}"
+						FileIconBitmap="{x:Bind ViewModel.IconData, Mode=OneWay}"
 						ItemSize="48"
 						ViewModel="{x:Bind ViewModel}" />
 

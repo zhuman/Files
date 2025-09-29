@@ -7,7 +7,9 @@ using Microsoft.Win32.SafeHandles;
 using System.Collections.Concurrent;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Drawing.Text;
 using System.IO;
+using System.Runtime.Caching;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
@@ -27,7 +29,7 @@ namespace Files.App.Helpers
 	/// </summary>
 	public static partial class Win32Helper
 	{
-		public static Task StartSTATask(Func<Task> func)
+		private static readonly MemoryCache iconCache = new("MaterializableIcons");
 		{
 			var taskCompletionSource = new TaskCompletionSource();
 			Thread thread = new Thread(async () =>
@@ -220,11 +222,12 @@ namespace Files.App.Helpers
 		/// <param name="path"></param>
 		/// <param name="isDirectory"></param>
 		/// <returns></returns>
-		public static byte[]? GetIconOverlay(string path, bool isDirectory)
+		public static MaterializableBitmap? GetIconOverlay(string path, bool isDirectory)
 		{
 			var shFileInfo = new Shell32.SHFILEINFO();
-			const Shell32.SHGFI flags = Shell32.SHGFI.SHGFI_OVERLAYINDEX | Shell32.SHGFI.SHGFI_ICON | Shell32.SHGFI.SHGFI_SYSICONINDEX | Shell32.SHGFI.SHGFI_ICONLOCATION;
-			byte[]? overlayData = null;
+			const Shell32.SHGFI flags = Shell32.SHGFI.SHGFI_OVERLAYINDEX | Shell32.SHGFI.SHGFI_ICON | Shell32.SHGFI.SHGFI_SYSICONINDEX;
+			MaterializableBitmap? overlayData = null;
+			string cacheKey;
 
 			try
 			{
@@ -234,31 +237,32 @@ namespace Files.App.Helpers
 
 				User32.DestroyIcon(shFileInfo.hIcon);
 
+				var overlayIdx = shFileInfo.iIcon >> 24;
+
+				cacheKey = $"{overlayIdx}OverlayIcon";
+				if ((overlayData = iconCache.Get(cacheKey) as MaterializableBitmap) != null)
+					return overlayData;
+
+				if (overlayIdx != 0)
+				{
 				lock (_iconOverlayLock)
 				{
 					if (!Shell32.SHGetImageList(Shell32.SHIL.SHIL_LARGE, typeof(ComCtl32.IImageList).GUID, out var imageListOut).Succeeded)
 						return null;
 
 					var imageList = (ComCtl32.IImageList)imageListOut;
-
-					var overlayIdx = shFileInfo.iIcon >> 24;
-					if (overlayIdx != 0)
-					{
 						var overlayImage = imageList.GetOverlayImage(overlayIdx);
 
-						using var hOverlay = imageList.GetIcon(overlayImage, ComCtl32.IMAGELISTDRAWFLAGS.ILD_TRANSPARENT);
+						overlayData = MaterializableBitmap.CreateFromImageList(imageList, overlayImage);
 
-						if (!hOverlay.IsNull && !hOverlay.IsInvalid)
+						if (overlayData != null)
 						{
-							using var icon = hOverlay.ToIcon();
-							using var image = icon.ToBitmap();
-
-							overlayData = (byte[]?)new ImageConverter().ConvertTo(image, typeof(byte[]));
+							iconCache.Add(cacheKey, overlayData, new CacheItemPolicy() { SlidingExpiration = TimeSpan.FromMinutes(1) });
 						}
-					}
 
 					Marshal.ReleaseComObject(imageList);
 				}
+			}
 			}
 			catch (Exception)
 			{
@@ -266,6 +270,47 @@ namespace Files.App.Helpers
 			}
 
 			return overlayData;
+		}
+
+		private static (int, Shell32.SHIL)[] shellImageListSizes = null;
+
+		private static Shell32.SHIL GetShellImageListForSize(int size)
+		{
+			if (shellImageListSizes is null)
+			{
+				int GetImageListSize(Shell32.SHIL list)
+				{ 
+					if (!Shell32.SHGetImageList(list, typeof(ComCtl32.IImageList).GUID, out var imageListOut).Succeeded)
+						// If it fails, return the defaults
+						return (list) switch
+						{
+							Shell32.SHIL.SHIL_SMALL => 16,
+							Shell32.SHIL.SHIL_LARGE => 32,
+							Shell32.SHIL.SHIL_EXTRALARGE => 48,
+							_ => 256,
+						};
+
+					var imageList = (ComCtl32.IImageList)imageListOut;
+					var result = imageList.GetIconSize().cx;
+					Marshal.ReleaseComObject(imageList);
+					return result;
+				}
+				;
+
+				shellImageListSizes = new (int, Shell32.SHIL)[]
+				{
+					(GetImageListSize(Shell32.SHIL.SHIL_SMALL), Shell32.SHIL.SHIL_SMALL),
+					(GetImageListSize(Shell32.SHIL.SHIL_LARGE), Shell32.SHIL.SHIL_LARGE),
+					(GetImageListSize(Shell32.SHIL.SHIL_EXTRALARGE), Shell32.SHIL.SHIL_EXTRALARGE),
+					(GetImageListSize(Shell32.SHIL.SHIL_JUMBO), Shell32.SHIL.SHIL_JUMBO),
+				};
+			}
+			foreach (var (s, shil) in shellImageListSizes)
+			{
+				if (size <= s)
+					return shil;
+			}
+			return Shell32.SHIL.SHIL_JUMBO;
 		}
 
 		private static readonly object _iconLock = new object();
@@ -278,22 +323,27 @@ namespace Files.App.Helpers
 		/// <param name="isFolder"></param>
 		/// <param name="iconOptions"></param>
 		/// <returns></returns>
-		public static byte[]? GetIcon(
+		public static MaterializableBitmap? GetIcon(
 			string path,
 			int size,
 			bool isFolder,
 			IconOptions iconOptions)
 		{
-			byte[]? iconData = null;
+			MaterializableBitmap? iconData = null;
+			string? cacheKey = null;
 
 			try
 			{
+				if (!iconOptions.HasFlag(IconOptions.ReturnIconOnly))
+				{
 				// Attempt to get file icon/thumbnail using IShellItemImageFactory GetImage
 				using var shellItem = SafetyExtensions.IgnoreExceptions(()
 					=> ShellFolderExtensions.GetShellItemFromPathOrPIDL(path));
 
 				if (shellItem is not null && shellItem.IShellItem is Shell32.IShellItemImageFactory shellFactory)
 				{
+						try
+						{
 					var flags = Shell32.SIIGBF.SIIGBF_BIGGERSIZEOK;
 
 					if (iconOptions.HasFlag(IconOptions.ReturnIconOnly))
@@ -306,39 +356,44 @@ namespace Files.App.Helpers
 						flags |= Shell32.SIIGBF.SIIGBF_INCACHEONLY;
 
 					var hres = shellFactory.GetImage(new Vanara.PInvoke.SIZE(size, size), flags, out var hbitmap);
-					if (hres == HRESULT.S_OK)
+							if (hres == HRESULT.S_OK && !hbitmap.IsInvalid)
 					{
-						using var image = GetBitmapFromHBitmap(hbitmap);
-						if (image is not null)
-							iconData = (byte[]?)new ImageConverter().ConvertTo(image, typeof(byte[]));
+								iconData = MaterializableBitmap.CreateFromBitmap(Image.FromHbitmap(hbitmap.DangerousGetHandle()));
+								hbitmap.Dispose();
 					}
 
+						}
+						finally
+						{
 					Marshal.ReleaseComObject(shellFactory);
+				}
+					}
 				}
 
 				if (iconData is not null || iconOptions.HasFlag(IconOptions.ReturnThumbnailOnly))
 					return iconData;
 				else
 				{
-					var shfi = new Shell32.SHFILEINFO();
-					const Shell32.SHGFI flags = Shell32.SHGFI.SHGFI_OVERLAYINDEX | Shell32.SHGFI.SHGFI_ICON | Shell32.SHGFI.SHGFI_SYSICONINDEX | Shell32.SHGFI.SHGFI_ICONLOCATION | Shell32.SHGFI.SHGFI_USEFILEATTRIBUTES;
-
 					// Cannot access file, use file attributes
-					var useFileAttibutes = iconData is null;
+					var useFileAttibutes = iconData is null && iconOptions.HasFlag(IconOptions.ReturnOnlyIfCached);
+
+					var shfi = new Shell32.SHFILEINFO();
+					Shell32.SHGFI flags = Shell32.SHGFI.SHGFI_SYSICONINDEX | (useFileAttibutes ? Shell32.SHGFI.SHGFI_USEFILEATTRIBUTES : 0);
+
+					if (size <= 16)
+						flags |= Shell32.SHGFI.SHGFI_SMALLICON;
+					else
+						flags |= Shell32.SHGFI.SHGFI_LARGEICON;
 
 					var ret = Shell32.SHGetFileInfo(path, isFolder ? FileAttributes.Directory : 0, ref shfi, Shell32.SHFILEINFO.Size, flags);
 					if (ret == IntPtr.Zero)
 						return iconData;
 
+					// Since we didn't pass SHGFI_ICON, hIcon should be null
+					Debug.Assert(shfi.hIcon == IntPtr.Zero);
 					User32.DestroyIcon(shfi.hIcon);
 
-					var imageListSize = size switch
-					{
-						<= 16 => Shell32.SHIL.SHIL_SMALL,
-						<= 32 => Shell32.SHIL.SHIL_LARGE,
-						<= 48 => Shell32.SHIL.SHIL_EXTRALARGE,
-						_ => Shell32.SHIL.SHIL_JUMBO,
-					};
+					var imageListSize = GetShellImageListForSize(size);
 
 					lock (_iconLock)
 					{
@@ -346,41 +401,52 @@ namespace Files.App.Helpers
 							return iconData;
 
 						var imageList = (ComCtl32.IImageList)imageListOut;
-
+						try
+						{
 						if (iconData is null)
 						{
 							var iconIdx = shfi.iIcon & 0xFFFFFF;
 							if (iconIdx != 0)
 							{
-								// Could not fetch thumbnail, load simple icon
-								using var hIcon = imageList.GetIcon(iconIdx, ComCtl32.IMAGELISTDRAWFLAGS.ILD_TRANSPARENT);
-								if (!hIcon.IsNull && !hIcon.IsInvalid)
-								{
-									using (var icon = hIcon.ToIcon())
-									using (var image = icon.ToBitmap())
-									{
-										iconData = (byte[]?)new ImageConverter().ConvertTo(image, typeof(byte[]));
-									}
-								}
+									cacheKey = $"{iconIdx}Icon-Size{(int)imageListSize}";
+									if ((iconData = iconCache.Get(cacheKey) as MaterializableBitmap) != null)
+										return iconData;
+
+									iconData = MaterializableBitmap.CreateFromImageList(imageList, iconIdx);
 							}
 							else if (isFolder)
 							{
+									cacheKey = $"GenericIcon2-{size}";
+									if ((iconData = iconCache.Get(cacheKey) as MaterializableBitmap) != null)
+										return iconData;
+
 								// Could not icon, load generic icon
 								var icons = ExtractSelectedIconsFromDLL(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "imageres.dll"), [2], size);
 								var generic = icons.SingleOrDefault(x => x.Index == 2);
-								iconData = generic?.IconData;
+									iconData = MaterializableBitmap.CreateFromFileBytes(generic?.IconData);
 							}
 							else
 							{
+									cacheKey = $"GenericIcon1-{size}";
+									if ((iconData = iconCache.Get(cacheKey) as MaterializableBitmap) != null)
+										return iconData;
+
 								// Could not icon, load generic icon
 								var icons = ExtractSelectedIconsFromDLL(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "shell32.dll"), [1], size);
 								var generic = icons.SingleOrDefault(x => x.Index == 1);
-								iconData = generic?.IconData;
+									iconData = MaterializableBitmap.CreateFromFileBytes(generic?.IconData);
 							}
 						}
 
+						}
+						finally
+						{
 						Marshal.ReleaseComObject(imageList);
 					}
+					}
+
+					if (cacheKey != null && iconData != null)
+						iconCache.Add(cacheKey, iconData, new CacheItemPolicy() { SlidingExpiration = TimeSpan.FromMinutes(1) });
 
 					return iconData;
 				}
@@ -616,7 +682,7 @@ namespace Files.App.Helpers
 			return clone;
 		}
 
-		private static bool IsAlphaBitmap(BitmapData bmpData)
+		public static bool IsAlphaBitmap(BitmapData bmpData)
 		{
 			for (int y = 0; y <= bmpData.Height - 1; y++)
 			{
@@ -625,7 +691,7 @@ namespace Files.App.Helpers
 					Color pixelColor = Color.FromArgb(
 						Marshal.ReadInt32(bmpData.Scan0, (bmpData.Stride * y) + (4 * x)));
 
-					if (pixelColor.A > 0 & pixelColor.A < 255)
+					if (pixelColor.A > 0 && pixelColor.A < 255)
 						return true;
 				}
 			}

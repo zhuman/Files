@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Files.App.Controls;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace Files.App.Data.Models
@@ -18,8 +19,8 @@ namespace Files.App.Data.Models
 
 		public string Name { get; set; }
 
-		private BitmapImage? fileImage;
-		public BitmapImage? FileImage
+		private ImageSource? fileImage;
+		public ImageSource? FileImage
 		{
 			get => fileImage;
 			set
@@ -42,6 +43,10 @@ namespace Files.App.Data.Models
 							img.ImageOpened += Img_ImageOpened;
 						}
 					}
+					else if (value != null)
+					{
+						Img_ImageOpened(value, null);
+					}
 				}
 			}
 		}
@@ -60,6 +65,14 @@ namespace Files.App.Data.Models
 						NeedsPlaceholderGlyph = false;
 					}, App.Logger); // 2009482836u
 				}
+			}
+			else if (sender is ImageSource imageSource)
+			{
+				SafetyExtensions.IgnoreExceptions(() =>
+				{
+					LoadFileIcon = true;
+					NeedsPlaceholderGlyph = false;
+				}, App.Logger); // 2009482836u
 			}
 		}
 

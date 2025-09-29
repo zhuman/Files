@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Files.Shared.Utils;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace Files.App.Data.Models
@@ -9,9 +10,9 @@ namespace Files.App.Data.Models
 	/// <inheritdoc cref="IImage"/>
 	internal sealed class BitmapImageModel : IImage
 	{
-		public BitmapImage Image { get; }
+		public ImageSource Image { get; }
 
-		public BitmapImageModel(BitmapImage image)
+		public BitmapImageModel(ImageSource image)
 		{
 			Image = image;
 		}

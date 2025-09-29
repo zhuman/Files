@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Files Community
 // Licensed under the MIT License.
 
-using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Xaml.Media;
 using Windows.Win32;
 using Windows.Win32.UI.Shell;
 
@@ -21,8 +21,8 @@ namespace Files.App.Data.Items
 
 		public string Tooltip { get; set; }
 
-		private BitmapImage? _Thumbnail;
-		public BitmapImage? Thumbnail { get => _Thumbnail; set => SetProperty(ref _Thumbnail, value); }
+		private ImageSource? _Thumbnail;
+		public ImageSource? Thumbnail { get => _Thumbnail; set => SetProperty(ref _Thumbnail, value); }
 
 		// Constructor
 

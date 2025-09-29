@@ -55,8 +55,8 @@ namespace Files.App.Data.Models
 			set => SetProperty(ref loadFileIcon, value);
 		}
 
-		private byte[] iconData;
-		public byte[] IconData
+		private MaterializableBitmap? iconData;
+		public MaterializableBitmap? IconData
 		{
 			get => iconData;
 			set => SetProperty(ref iconData, value);

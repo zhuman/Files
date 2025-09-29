@@ -89,7 +89,7 @@ namespace Files.App.Utils.Cloud
 		{
 			try
 			{
-				var iconData = provider.IconData;
+				var iconData = provider.IconData == null ? null : MaterializableBitmap.CreateFromFileBytes(provider.IconData);
 
 				if (iconData is null)
 				{

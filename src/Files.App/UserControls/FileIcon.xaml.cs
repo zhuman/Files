@@ -3,6 +3,7 @@
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Storage.Streams;
@@ -46,11 +47,11 @@ namespace Files.App.UserControls
 
 		private double LargerItemSize { get; set; }
 
-		private static DependencyProperty FileIconImageSourceProperty { get; } = DependencyProperty.Register(nameof(FileIconImageSource), typeof(BitmapImage), typeof(FileIcon), null);
+		private static DependencyProperty FileIconImageSourceProperty { get; } = DependencyProperty.Register(nameof(FileIconImageSource), typeof(ImageSource), typeof(FileIcon), null);
 
-		private BitmapImage FileIconImageSource
+		private ImageSource FileIconImageSource
 		{
-			get => GetValue(FileIconImageSourceProperty) as BitmapImage;
+			get => GetValue(FileIconImageSourceProperty) as ImageSource;
 			set => SetValue(FileIconImageSourceProperty, value);
 		}
 
@@ -69,6 +70,21 @@ namespace Files.App.UserControls
 			}
 		}
 
+		public static DependencyProperty FileIconBitmapProperty { get; } = DependencyProperty.Register(nameof(FileIconBitmap), typeof(MaterializableBitmap), typeof(FileIcon), null);
+
+		public MaterializableBitmap FileIconBitmap
+		{
+			get => GetValue(FileIconBitmapProperty) as MaterializableBitmap;
+			set
+			{
+				SetValue(FileIconBitmapProperty, value);
+				if (value is not null)
+				{
+					UpdateImageSourceAsync();
+				}
+			}
+		}
+
 		private SvgImageSource CustomIconImageSource { get; set; }
 
 		public FileIcon()
@@ -78,13 +94,18 @@ namespace Files.App.UserControls
 
 		public async Task UpdateImageSourceAsync()
 		{
+			if (FileIconBitmap is not null)
+			{
+				FileIconImageSource = await FileIconBitmap.MaterializeOnUiThreadAsync();
+			}
 			if (FileIconImageData is not null)
 			{
-				FileIconImageSource = new BitmapImage();
+				var newBitmap = new BitmapImage();
+				FileIconImageSource = FileIconImageSource;
 				using InMemoryRandomAccessStream stream = new InMemoryRandomAccessStream();
 				await stream.WriteAsync(FileIconImageData.AsBuffer());
 				stream.Seek(0);
-				await FileIconImageSource.SetSourceAsync(stream);
+				await newBitmap.SetSourceAsync(stream);
 			}
 		}
 	}

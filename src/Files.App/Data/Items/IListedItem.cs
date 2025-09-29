@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Files.App.ViewModels.Properties;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Storage;
 
@@ -13,12 +14,12 @@ namespace Files.App.Utils
 		RecycleBinItem AsRecycleBinItem { get; }
 		bool ContainsFilesOrFolders { get; set; }
 		string ContextualProperty { get; set; }
-		BitmapImage CustomIcon { get; set; }
+		ImageSource CustomIcon { get; set; }
 		Uri CustomIconSource { get; set; }
 		ObservableCollection<FileProperty> FileDetails { get; set; }
 		string FileExtension { get; set; }
 		ulong? FileFRN { get; set; }
-		BitmapImage FileImage { get; set; }
+		ImageSource FileImage { get; set; }
 		string FileSize { get; set; }
 		long FileSizeBytes { get; set; }
 		string FileSizeDisplay { get; }
@@ -27,7 +28,7 @@ namespace Files.App.Utils
 		string FileVersion { get; set; }
 		string FolderRelativeId { get; set; }
 		bool HasTags { get; set; }
-		BitmapImage IconOverlay { get; set; }
+		ImageSource IconOverlay { get; set; }
 		string ImageDimensions { get; set; }
 		bool IsAlternateStream { get; }
 		bool IsArchive { get; }
@@ -67,7 +68,7 @@ namespace Files.App.Utils
 		bool NeedsPlaceholderGlyph { get; set; }
 		double Opacity { get; set; }
 		StorageItemTypes PrimaryItemAttribute { get; set; }
-		BitmapImage ShieldIcon { get; set; }
+		ImageSource ShieldIcon { get; set; }
 		bool ShowDriveStorageDetails { get; set; }
 		ByteSizeLib.ByteSize SpaceUsed { get; set; }
 		string SyncStatusString { get; }
