@@ -21,7 +21,7 @@ namespace Files.App.Actions
 
 		public bool IsExecutable =>
 			context.SelectedItems.Count == 1 &&
-			FileExtensionHelpers.IsInfFile(context.SelectedItems[0].FileExtension) &&
+			context.SelectedItems.All(item => !item.IsFolder && FileExtensionHelpers.IsInfFile(item.FileExtension)) &&
 			context.PageType != ContentPageTypes.RecycleBin &&
 			context.PageType != ContentPageTypes.ZipFolder;
 

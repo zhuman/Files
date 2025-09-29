@@ -902,6 +902,16 @@ namespace Files.App.Helpers
 			return Win32PInvoke.SetFileTime(hFile.DangerousGetHandle(), new(), new(), dateModified);
 		}
 
+		public static FileAttributes GetFileAttributes(string lpFileName)
+		{
+			if (Win32PInvoke.GetFileAttributesExFromApp(
+				lpFileName, Win32PInvoke.GET_FILEEX_INFO_LEVELS.GetFileExInfoStandard, out var lpFileInfo))
+			{
+				return (FileAttributes)lpFileInfo.dwFileAttributes;
+			}
+			return FileAttributes.None;
+		}
+
 		public static bool HasFileAttribute(string lpFileName, FileAttributes dwAttrs)
 		{
 			if (Win32PInvoke.GetFileAttributesExFromApp(

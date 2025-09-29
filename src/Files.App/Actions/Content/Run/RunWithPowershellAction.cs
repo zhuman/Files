@@ -21,6 +21,7 @@ namespace Files.App.Actions
 
 		public bool IsExecutable =>
 			context.SelectedItem is not null &&
+			!context.SelectedItem.IsFolder &&
 			FileExtensionHelpers.IsPowerShellFile(context.SelectedItem.FileExtension);
 
 		public RunWithPowershellAction()

@@ -22,6 +22,7 @@ namespace Files.App.Actions
 			ContentPageContext.SelectedItem is not null &&
 			ContentPageContext.PageType != ContentPageTypes.RecycleBin &&
 			ContentPageContext.PageType != ContentPageTypes.ZipFolder &&
+			!ContentPageContext.SelectedItem.IsFolder &&
 			!FileExtensionHelpers.IsAhkFile(ContentPageContext.SelectedItem.FileExtension) &&
 			(FileExtensionHelpers.IsExecutableFile(ContentPageContext.SelectedItem.FileExtension) ||
 			(ContentPageContext.SelectedItem is IShortcutItem shortcut &&

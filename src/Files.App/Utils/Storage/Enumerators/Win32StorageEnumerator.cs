@@ -44,7 +44,7 @@ namespace Files.App.Utils.Storage
 					(!isSystem || userSettingsService.FoldersSettingsService.ShowProtectedSystemFiles))) &&
 					(!startWithDot || userSettingsService.FoldersSettingsService.ShowDotFiles))
 				{
-					if (((FileAttributes)findData.dwFileAttributes & FileAttributes.Directory) != FileAttributes.Directory)
+					if (!((FileAttributes)findData.dwFileAttributes).HasFlag(FileAttributes.Directory))
 					{
 						var file = await GetFile(findData, path, isGitRepo, cancellationToken);
 						if (file is not null)
@@ -58,7 +58,7 @@ namespace Files.App.Utils.Storage
 							}
 						}
 					}
-					else if (((FileAttributes)findData.dwFileAttributes & FileAttributes.Directory) == FileAttributes.Directory)
+					else if (((FileAttributes)findData.dwFileAttributes).HasFlag(FileAttributes.Directory))
 					{
 						if (findData.cFileName != "." && findData.cFileName != "..")
 						{
@@ -174,7 +174,7 @@ namespace Files.App.Utils.Storage
 			if (string.IsNullOrEmpty(itemName))
 				itemName = findData.cFileName;
 
-			bool isHidden = (((FileAttributes)findData.dwFileAttributes & FileAttributes.Hidden) == FileAttributes.Hidden);
+			bool isHidden = ((FileAttributes)findData.dwFileAttributes).HasFlag(FileAttributes.Hidden);
 			double opacity = 1;
 
 			if (isHidden)
@@ -264,11 +264,11 @@ namespace Files.App.Utils.Storage
 			if (cancellationToken.IsCancellationRequested)
 				return null;
 
-			bool isHidden = ((FileAttributes)findData.dwFileAttributes & FileAttributes.Hidden) == FileAttributes.Hidden;
+			bool isHidden = ((FileAttributes)findData.dwFileAttributes).HasFlag(FileAttributes.Hidden);
 			double opacity = isHidden ? Constants.UI.DimItemOpacity : 1;
 
 			// https://learn.microsoft.com/openspecs/windows_protocols/ms-fscc/c8e77b37-3909-4fe6-a4ea-2b9d423b1ee4
-			bool isReparsePoint = ((FileAttributes)findData.dwFileAttributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint;
+			bool isReparsePoint = ((FileAttributes)findData.dwFileAttributes).HasFlag(FileAttributes.ReparsePoint);
 			bool isSymlink = isReparsePoint && findData.dwReserved0 == Win32PInvoke.IO_REPARSE_TAG_SYMLINK;
 
 			if (isSymlink)

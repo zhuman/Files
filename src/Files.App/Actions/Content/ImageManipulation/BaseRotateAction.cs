@@ -28,7 +28,7 @@ namespace Files.App.Actions
 			context.PageType != ContentPageTypes.ReleaseNotes &&
 			context.PageType != ContentPageTypes.Settings &&
 			context.HasSelection &&
-			context.SelectedItems.All(x => FileExtensionHelpers.IsCompatibleToSetAsWindowsWallpaper(x.FileExtension));
+			context.SelectedItems.All(x => !x.IsFolder && FileExtensionHelpers.IsCompatibleToSetAsWindowsWallpaper(x.FileExtension));
 
 		public BaseRotateAction()
 		{

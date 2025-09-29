@@ -60,7 +60,7 @@ namespace Files.App.Actions
 						if (ContentPageContext.ShellPage is not null && ContentPageContext.ShellPage.SlimContentPage is not null)
 						{
 							var viewModel = ContentPageContext.ShellPage.SlimContentPage.SelectedItemsPropertiesViewModel;
-							var extensions = ContentPageContext.SelectedItems.Select(selectedItem => selectedItem.FileExtension).Distinct().ToList();
+							var extensions = ContentPageContext.SelectedItems.Where(item => !item.IsFolder).Select(selectedItem => selectedItem.FileExtension).Distinct().ToList();
 
 							viewModel.CheckAllFileExtensions(extensions);
 						}

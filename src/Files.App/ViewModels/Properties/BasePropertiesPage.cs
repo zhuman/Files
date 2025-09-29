@@ -62,8 +62,8 @@ namespace Files.App.ViewModels.Properties
 					BaseProperties = new CombinedFileProperties(ViewModel, np.CancellationTokenSource, DispatcherQueue, items, AppInstance);
 
 					ViewModel.IsEditAlbumCoverVisible =
-						items.All(item => FileExtensionHelpers.IsVideoFile(item.FileExtension)) ||
-						items.All(item => FileExtensionHelpers.IsAudioFile(item.FileExtension));
+						items.All(item => !item.IsFolder && FileExtensionHelpers.IsVideoFile(item.FileExtension)) ||
+						items.All(item => !item.IsFolder && FileExtensionHelpers.IsAudioFile(item.FileExtension));
 				}
 				// Selection includes folders
 				else

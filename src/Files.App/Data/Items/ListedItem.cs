@@ -433,7 +433,7 @@ namespace Files.App.Utils
 		public bool IsAlternateStream => this is AlternateStreamItem;
 		public bool IsGitItem => this is IGitItem;
 		public virtual bool IsExecutable => !IsFolder && FileExtensionHelpers.IsExecutableFile(ItemPath);
-		public virtual bool IsScriptFile => FileExtensionHelpers.IsScriptFile(ItemPath);
+		public virtual bool IsScriptFile => !IsFolder && FileExtensionHelpers.IsScriptFile(ItemPath);
 		public bool IsPinned => App.QuickAccessManager.Model.PinnedFolders.Contains(itemPath);
 		public bool IsDriveRoot => ItemPath == PathNormalization.GetPathRoot(ItemPath);
 		public bool IsElevationRequired { get; set; }
@@ -549,7 +549,7 @@ namespace Files.App.Utils
 		public SHOW_WINDOW_CMD ShowWindowCommand { get; set; }
 		public bool IsUrl { get; set; }
 		public bool IsSymLink { get; set; }
-		public override bool IsExecutable => FileExtensionHelpers.IsExecutableFile(TargetPath, true);
+		public override bool IsExecutable => !IsFolder && FileExtensionHelpers.IsExecutableFile(TargetPath, true);
 	}
 
 	public sealed partial class ZipItem : ListedItem
@@ -786,7 +786,7 @@ namespace Files.App.Utils
 		public SHOW_WINDOW_CMD ShowWindowCommand { get; set; }
 		public bool IsUrl { get; set; }
 		public bool IsSymLink { get; set; }
-		public override bool IsExecutable => FileExtensionHelpers.IsExecutableFile(TargetPath, true);
+		public override bool IsExecutable => !IsFolder && FileExtensionHelpers.IsExecutableFile(TargetPath, true);
 	}
 	public interface IGitItem : IListedItem
 	{

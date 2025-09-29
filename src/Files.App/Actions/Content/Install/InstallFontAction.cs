@@ -22,7 +22,7 @@ namespace Files.App.Actions
 
 		public bool IsExecutable =>
 			context.SelectedItems.Any() &&
-			context.SelectedItems.All(x => FileExtensionHelpers.IsFontFile(x.FileExtension)) &&
+			context.SelectedItems.All(x => !x.IsFolder && FileExtensionHelpers.IsFontFile(x.FileExtension)) &&
 			context.PageType != ContentPageTypes.RecycleBin &&
 			context.PageType != ContentPageTypes.ZipFolder;
 

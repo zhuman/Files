@@ -1978,7 +1978,7 @@ namespace Files.App.ViewModels
 		private void CheckForSolutionFile()
 		{
 			SolutionFilePath = filesAndFolders.ToList().AsParallel()
-				.Where(item => FileExtensionHelpers.HasExtension(item.FileExtension, ".sln", ".slnx"))
+				.Where(item => !item.IsFolder && FileExtensionHelpers.HasExtension(item.FileExtension, ".sln", ".slnx"))
 				.FirstOrDefault()?.ItemPath;
 		}
 
@@ -2586,8 +2586,7 @@ namespace Files.App.ViewModels
 
 			ListedItem listedItem;
 
-			// FILE_ATTRIBUTE_DIRECTORY
-			if ((findData.dwFileAttributes & 0x10) > 0)
+			if (((FileAttributes)findData.dwFileAttributes).HasFlag(FileAttributes.Directory))
 				listedItem = await Win32StorageEnumerator.GetFolder(findData, Directory.GetParent(fileOrFolderPath).FullName, IsValidGitDirectory, addFilesCTS.Token);
 			else
 				listedItem = await Win32StorageEnumerator.GetFile(findData, Directory.GetParent(fileOrFolderPath).FullName, IsValidGitDirectory, addFilesCTS.Token);

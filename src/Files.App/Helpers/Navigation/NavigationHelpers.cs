@@ -399,11 +399,12 @@ namespace Files.App.Helpers
 		public static async Task<bool> OpenPath(string path, IShellPage associatedInstance, FilesystemItemType? itemType = null, bool openSilent = false, bool openViaApplicationPicker = false, IEnumerable<string>? selectItems = null, string? args = default, bool forceOpenInNewTab = false)
 		{
 			string previousDir = associatedInstance.ShellViewModel.WorkingDirectory;
-			bool isHiddenItem = Win32Helper.HasFileAttribute(path, System.IO.FileAttributes.Hidden);
-			bool isDirectory = Win32Helper.HasFileAttribute(path, System.IO.FileAttributes.Directory);
-			bool isReparsePoint = Win32Helper.HasFileAttribute(path, System.IO.FileAttributes.ReparsePoint);
-			bool isShortcut = FileExtensionHelpers.IsShortcutOrUrlFile(path);
-			bool isScreenSaver = FileExtensionHelpers.IsScreenSaverFile(path);
+			var fileAttributes = Win32Helper.GetFileAttributes(path);
+			bool isHiddenItem = fileAttributes.HasFlag(System.IO.FileAttributes.Hidden);
+			bool isDirectory = fileAttributes.HasFlag(System.IO.FileAttributes.Directory);
+			bool isReparsePoint = fileAttributes.HasFlag(System.IO.FileAttributes.ReparsePoint);
+			bool isShortcut = !isDirectory && FileExtensionHelpers.IsShortcutOrUrlFile(path);
+			bool isScreenSaver = !isDirectory && FileExtensionHelpers.IsScreenSaverFile(path);
 			bool isTag = path.StartsWith("tag:");
 			FilesystemResult opened = (FilesystemResult)false;
 
@@ -464,7 +465,7 @@ namespace Files.App.Helpers
 				}
 				else if (isHiddenItem)
 				{
-					itemType = Win32Helper.HasFileAttribute(path, System.IO.FileAttributes.Directory) ? FilesystemItemType.Directory : FilesystemItemType.File;
+					itemType = isDirectory ? FilesystemItemType.Directory : FilesystemItemType.File;
 				}
 				else
 				{

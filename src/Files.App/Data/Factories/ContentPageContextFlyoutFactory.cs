@@ -89,7 +89,7 @@ namespace Files.App.Data.Factories
 			bool showOpenItemWith = selectedItems.All(
 				i => (i.PrimaryItemAttribute == StorageItemTypes.File && !i.IsShortcut && !i.IsExecutable) || (i.PrimaryItemAttribute == StorageItemTypes.Folder && i.IsArchive));
 			bool areAllItemsFolders = selectedItems.All(i => i.PrimaryItemAttribute == StorageItemTypes.Folder);
-			bool isFirstFileExecutable = FileExtensionHelpers.IsExecutableFile(selectedItems.FirstOrDefault()?.FileExtension);
+			bool isFirstFileExecutable = (!selectedItems.FirstOrDefault()?.IsFolder ?? false) && FileExtensionHelpers.IsExecutableFile(selectedItems.FirstOrDefault()?.FileExtension);
 			string newArchiveName =
 				Path.GetFileName(selectedItems.Count is 1 ? selectedItems[0].ItemPath : Path.GetDirectoryName(selectedItems[0].ItemPath))
 				?? string.Empty;

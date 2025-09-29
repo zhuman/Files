@@ -22,7 +22,7 @@ namespace Files.App.Actions
 		public bool IsExecutable =>
 			context.PageType != ContentPageTypes.RecycleBin &&
 			context.SelectedItems.Count > 1 &&
-			context.SelectedItems.All(item => FileExtensionHelpers.IsMediaFile(item.FileExtension));
+			context.SelectedItems.All(item => !item.IsFolder && FileExtensionHelpers.IsMediaFile(item.FileExtension));
 
 		public PlayAllAction()
 		{

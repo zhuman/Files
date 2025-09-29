@@ -37,11 +37,6 @@ namespace Files.Shared.Helpers
 			if (string.IsNullOrWhiteSpace(filePathToCheck))
 				return false;
 
-			// Don't check folder paths to avoid issues
-			// https://github.com/files-community/Files/issues/17094
-			if (Directory.Exists(filePathToCheck))
-				return false;
-
 			return extensions.Any(ext => Path.GetExtension(filePathToCheck).Equals(ext, StringComparison.OrdinalIgnoreCase));
 		}
 
