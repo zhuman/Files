@@ -6,6 +6,7 @@ using LibGit2Sharp;
 using Microsoft.Extensions.Logging;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Runtime.Caching;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -60,6 +61,8 @@ namespace Files.App.Utils.Git
 
 		public static event EventHandler? GitFetchCompleted;
 
+		private static MemoryCache gitRepositoryPathCache = new("GitRepositoryPaths");
+
 		public static string? GetGitRepositoryPath(string? path, string root)
 		{
 			if (string.IsNullOrEmpty(root))
@@ -76,18 +79,26 @@ namespace Files.App.Utils.Git
 				return null;
 			}
 
+			// We'll store an empty string for "null" since otherwise we can't tell if the key is present
+			string? cachedRepoPath = null;
+			if ((cachedRepoPath = gitRepositoryPathCache.Get(path) as string) != null)
+				return cachedRepoPath == "" ? null : cachedRepoPath;
+
 			try
 			{
 				if (IsRepoValid(path))
-					return path;
+					cachedRepoPath = path;
 				else
 				{
 					var parentDir = PathNormalization.GetParentDir(path);
 					if (parentDir == path)
-						return null;
+						cachedRepoPath = null;
 					else
-						return GetGitRepositoryPath(parentDir, root);
+						cachedRepoPath = GetGitRepositoryPath(parentDir, root);
 				}
+
+				gitRepositoryPathCache.Add(path, cachedRepoPath ?? "", new CacheItemPolicy() { SlidingExpiration = TimeSpan.FromMinutes(1) });
+				return cachedRepoPath;
 			}
 			catch (Exception ex) when (ex is LibGit2SharpException or EncoderFallbackException)
 			{
