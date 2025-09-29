@@ -175,7 +175,9 @@ namespace Files.App.ViewModels.UserControls
 
 		private async Task LoadPreviewControlAsync(CancellationToken token, bool downloadItem)
 		{
-			if (SelectedItem.IsHiddenItem && !SelectedItem.ItemPath.EndsWith("\\"))
+			var selectedItem = SelectedItem;
+
+			if (selectedItem.IsHiddenItem && !selectedItem.ItemPath.EndsWith("\\"))
 			{
 				PreviewPaneState = PreviewPaneStates.NoPreviewOrDetailsAvailable;
 
@@ -183,7 +185,7 @@ namespace Files.App.ViewModels.UserControls
 				return;
 			}
 
-			var control = await GetBuiltInPreviewControlAsync(SelectedItem, downloadItem);
+			var control = await GetBuiltInPreviewControlAsync(selectedItem, downloadItem);
 
 			if (token.IsCancellationRequested)
 				return;
@@ -191,11 +193,11 @@ namespace Files.App.ViewModels.UserControls
 			if (control is not null)
 			{
 				PreviewPaneContent = control;
-				PreviewPaneState = SelectedItem.IsDriveRoot ? PreviewPaneStates.DriveStorageDetailsAvailable : PreviewPaneStates.PreviewAndDetailsAvailable;
+				PreviewPaneState = selectedItem.IsDriveRoot ? PreviewPaneStates.DriveStorageDetailsAvailable : PreviewPaneStates.PreviewAndDetailsAvailable;
 				return;
 			}
 
-			var basicModel = new BasicPreviewViewModel(SelectedItem);
+			var basicModel = new BasicPreviewViewModel(selectedItem);
 			await basicModel.LoadAsync();
 
 			control = new BasicPreview(basicModel);
@@ -204,7 +206,7 @@ namespace Files.App.ViewModels.UserControls
 				return;
 
 			PreviewPaneContent = control;
-			PreviewPaneState = SelectedItem.IsDriveRoot ? PreviewPaneStates.DriveStorageDetailsAvailable : PreviewPaneStates.PreviewAndDetailsAvailable;
+			PreviewPaneState = selectedItem.IsDriveRoot ? PreviewPaneStates.DriveStorageDetailsAvailable : PreviewPaneStates.PreviewAndDetailsAvailable;
 		}
 
 		private async Task<UserControl> GetBuiltInPreviewControlAsync(ListedItem item, bool downloadItem)
