@@ -7,11 +7,9 @@ using Microsoft.Win32.SafeHandles;
 using System.Collections.Concurrent;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Drawing.Text;
 using System.IO;
 using System.Runtime.Caching;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Windows.Forms;
 using Vanara.PInvoke;
@@ -30,141 +28,6 @@ namespace Files.App.Helpers
 	public static partial class Win32Helper
 	{
 		private static readonly MemoryCache iconCache = new("MaterializableIcons");
-		{
-			var taskCompletionSource = new TaskCompletionSource();
-			Thread thread = new Thread(async () =>
-			{
-				Ole32.OleInitialize();
-
-				try
-				{
-					await func();
-					taskCompletionSource.SetResult();
-				}
-				catch (Exception ex)
-				{
-					taskCompletionSource.SetResult();
-					App.Logger.LogWarning(ex, ex.Message);
-				}
-				finally
-				{
-					Ole32.OleUninitialize();
-				}
-			})
-
-			{
-				IsBackground = true,
-				Priority = ThreadPriority.Normal
-			};
-
-			thread.SetApartmentState(ApartmentState.STA);
-			thread.Start();
-
-			return taskCompletionSource.Task;
-		}
-
-		public static Task StartSTATask(Action action)
-		{
-			var taskCompletionSource = new TaskCompletionSource();
-			Thread thread = new Thread(() =>
-			{
-				Ole32.OleInitialize();
-
-				try
-				{
-					action();
-					taskCompletionSource.SetResult();
-				}
-				catch (Exception ex)
-				{
-					taskCompletionSource.SetResult();
-					App.Logger.LogWarning(ex, ex.Message);
-				}
-				finally
-				{
-					Ole32.OleUninitialize();
-				}
-			})
-
-			{
-				IsBackground = true,
-				Priority = ThreadPriority.Normal
-			};
-
-			thread.SetApartmentState(ApartmentState.STA);
-			thread.Start();
-
-			return taskCompletionSource.Task;
-		}
-
-		public static Task<T?> StartSTATask<T>(Func<T> func)
-		{
-			var taskCompletionSource = new TaskCompletionSource<T?>();
-
-			Thread thread = new Thread(() =>
-			{
-				Ole32.OleInitialize();
-
-				try
-				{
-					taskCompletionSource.SetResult(func());
-				}
-				catch (Exception ex)
-				{
-					taskCompletionSource.SetResult(default);
-					App.Logger.LogWarning(ex, ex.Message);
-					//tcs.SetException(e);
-				}
-				finally
-				{
-					Ole32.OleUninitialize();
-				}
-			})
-
-			{
-				IsBackground = true,
-				Priority = ThreadPriority.Normal
-			};
-
-			thread.SetApartmentState(ApartmentState.STA);
-			thread.Start();
-
-			return taskCompletionSource.Task;
-		}
-
-		public static Task<T?> StartSTATask<T>(Func<Task<T>> func)
-		{
-			var taskCompletionSource = new TaskCompletionSource<T?>();
-
-			Thread thread = new Thread(async () =>
-			{
-				Ole32.OleInitialize();
-				try
-				{
-					taskCompletionSource.SetResult(await func());
-				}
-				catch (Exception ex)
-				{
-					taskCompletionSource.SetResult(default);
-					App.Logger.LogInformation(ex, ex.Message);
-					//tcs.SetException(e);
-				}
-				finally
-				{
-					Ole32.OleUninitialize();
-				}
-			})
-
-			{
-				IsBackground = true,
-				Priority = ThreadPriority.Normal
-			};
-
-			thread.SetApartmentState(ApartmentState.STA);
-			thread.Start();
-
-			return taskCompletionSource.Task;
-		}
 
 		public static async Task<string?> GetDefaultFileAssociationAsync(string filename, bool checkDesktopFirst = true)
 		{
@@ -245,24 +108,24 @@ namespace Files.App.Helpers
 
 				if (overlayIdx != 0)
 				{
-				lock (_iconOverlayLock)
-				{
-					if (!Shell32.SHGetImageList(Shell32.SHIL.SHIL_LARGE, typeof(ComCtl32.IImageList).GUID, out var imageListOut).Succeeded)
-						return null;
+					lock (_iconOverlayLock)
+					{
+						if (!Shell32.SHGetImageList(Shell32.SHIL.SHIL_LARGE, typeof(ComCtl32.IImageList).GUID, out var imageListOut).Succeeded)
+							return null;
 
-					var imageList = (ComCtl32.IImageList)imageListOut;
+						var imageList = (ComCtl32.IImageList)imageListOut;
 						var overlayImage = imageList.GetOverlayImage(overlayIdx);
 
 						overlayData = MaterializableBitmap.CreateFromImageList(imageList, overlayImage);
-
+						
 						if (overlayData != null)
 						{
 							iconCache.Add(cacheKey, overlayData, new CacheItemPolicy() { SlidingExpiration = TimeSpan.FromMinutes(1) });
 						}
 
-					Marshal.ReleaseComObject(imageList);
+						Marshal.ReleaseComObject(imageList);
+					}
 				}
-			}
 			}
 			catch (Exception)
 			{
@@ -336,37 +199,37 @@ namespace Files.App.Helpers
 			{
 				if (!iconOptions.HasFlag(IconOptions.ReturnIconOnly))
 				{
-				// Attempt to get file icon/thumbnail using IShellItemImageFactory GetImage
-				using var shellItem = SafetyExtensions.IgnoreExceptions(()
-					=> ShellFolderExtensions.GetShellItemFromPathOrPIDL(path));
+					// Attempt to get file icon/thumbnail using IShellItemImageFactory GetImage
+					using var shellItem = SafetyExtensions.IgnoreExceptions(()
+						=> ShellFolderExtensions.GetShellItemFromPathOrPIDL(path));
 
-				if (shellItem is not null && shellItem.IShellItem is Shell32.IShellItemImageFactory shellFactory)
-				{
+					if (shellItem is not null && shellItem.IShellItem is Shell32.IShellItemImageFactory shellFactory)
+					{
 						try
 						{
-					var flags = Shell32.SIIGBF.SIIGBF_BIGGERSIZEOK;
+							var flags = Shell32.SIIGBF.SIIGBF_BIGGERSIZEOK;
 
-					if (iconOptions.HasFlag(IconOptions.ReturnIconOnly))
-						flags |= Shell32.SIIGBF.SIIGBF_ICONONLY;
+							if (iconOptions.HasFlag(IconOptions.ReturnIconOnly))
+								flags |= Shell32.SIIGBF.SIIGBF_ICONONLY;
 
-					if (iconOptions.HasFlag(IconOptions.ReturnThumbnailOnly))
-						flags |= Shell32.SIIGBF.SIIGBF_THUMBNAILONLY;
+							if (iconOptions.HasFlag(IconOptions.ReturnThumbnailOnly))
+								flags |= Shell32.SIIGBF.SIIGBF_THUMBNAILONLY;
 
-					if (iconOptions.HasFlag(IconOptions.ReturnOnlyIfCached))
-						flags |= Shell32.SIIGBF.SIIGBF_INCACHEONLY;
+							if (iconOptions.HasFlag(IconOptions.ReturnOnlyIfCached))
+								flags |= Shell32.SIIGBF.SIIGBF_INCACHEONLY;
 
-					var hres = shellFactory.GetImage(new Vanara.PInvoke.SIZE(size, size), flags, out var hbitmap);
+							var hres = shellFactory.GetImage(new Vanara.PInvoke.SIZE(size, size), flags, out var hbitmap);
 							if (hres == HRESULT.S_OK && !hbitmap.IsInvalid)
-					{
+							{
 								iconData = MaterializableBitmap.CreateFromBitmap(Image.FromHbitmap(hbitmap.DangerousGetHandle()));
 								hbitmap.Dispose();
-					}
+							}
 
 						}
 						finally
 						{
-					Marshal.ReleaseComObject(shellFactory);
-				}
+							Marshal.ReleaseComObject(shellFactory);
+						}
 					}
 				}
 
@@ -403,46 +266,46 @@ namespace Files.App.Helpers
 						var imageList = (ComCtl32.IImageList)imageListOut;
 						try
 						{
-						if (iconData is null)
-						{
-							var iconIdx = shfi.iIcon & 0xFFFFFF;
-							if (iconIdx != 0)
+							if (iconData is null)
 							{
+								var iconIdx = shfi.iIcon & 0xFFFFFF;
+								if (iconIdx != 0)
+								{
 									cacheKey = $"{iconIdx}Icon-Size{(int)imageListSize}";
 									if ((iconData = iconCache.Get(cacheKey) as MaterializableBitmap) != null)
 										return iconData;
 
 									iconData = MaterializableBitmap.CreateFromImageList(imageList, iconIdx);
-							}
-							else if (isFolder)
-							{
+								}
+								else if (isFolder)
+								{
 									cacheKey = $"GenericIcon2-{size}";
 									if ((iconData = iconCache.Get(cacheKey) as MaterializableBitmap) != null)
 										return iconData;
 
-								// Could not icon, load generic icon
-								var icons = ExtractSelectedIconsFromDLL(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "imageres.dll"), [2], size);
-								var generic = icons.SingleOrDefault(x => x.Index == 2);
+									// Could not icon, load generic icon
+									var icons = ExtractSelectedIconsFromDLL(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "imageres.dll"), [2], size);
+									var generic = icons.SingleOrDefault(x => x.Index == 2);
 									iconData = MaterializableBitmap.CreateFromFileBytes(generic?.IconData);
-							}
-							else
-							{
+								}
+								else
+								{
 									cacheKey = $"GenericIcon1-{size}";
 									if ((iconData = iconCache.Get(cacheKey) as MaterializableBitmap) != null)
 										return iconData;
 
-								// Could not icon, load generic icon
-								var icons = ExtractSelectedIconsFromDLL(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "shell32.dll"), [1], size);
-								var generic = icons.SingleOrDefault(x => x.Index == 1);
+									// Could not icon, load generic icon
+									var icons = ExtractSelectedIconsFromDLL(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "shell32.dll"), [1], size);
+									var generic = icons.SingleOrDefault(x => x.Index == 1);
 									iconData = MaterializableBitmap.CreateFromFileBytes(generic?.IconData);
+								}
 							}
-						}
 
 						}
 						finally
 						{
-						Marshal.ReleaseComObject(imageList);
-					}
+							Marshal.ReleaseComObject(imageList);
+						}
 					}
 
 					if (cacheKey != null && iconData != null)
