@@ -37,7 +37,7 @@ namespace Files.App.Converters
 
 			try
 			{
-				if (Enum.GetName(targetType, enumValue) is string enumName)
+				if (targetType.IsEnum && Enum.GetName(targetType, enumValue) is string enumName)
 				{
 					return Enum.Parse(targetType, enumName);
 				}
