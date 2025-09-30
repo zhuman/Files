@@ -9,6 +9,7 @@ namespace Files.App.Actions
 	internal sealed partial class ShareItemAction : ObservableObject, IAction
 	{
 		private readonly IContentPageContext context;
+		private readonly bool isDataTransferManagerSupported = DataTransferManager.IsSupported();
 
 		public string Label
 			=> Strings.Share.GetLocalizedResource();
@@ -21,7 +22,7 @@ namespace Files.App.Actions
 
 		public bool IsExecutable =>
 			IsContextPageTypeAdaptedToCommand() &&
-			DataTransferManager.IsSupported() &&
+			isDataTransferManagerSupported &&
 			context.SelectedItems.Any() &&
 			context.SelectedItems.All(ShareItemHelpers.IsItemShareable);
 
