@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+using System.Linq.Expressions;
 using Windows.Foundation;
 using Windows.Storage;
 using Windows.System;
@@ -959,18 +960,26 @@ namespace Files.App.Views.Layouts
 			if (container is not null)
 			{
 				var checkbox = container.FindDescendant("SelectionCheckbox") as CheckBox;
+				bool hasChanged = false;
 				if (checkbox is not null)
 				{
-					// Temporarily disable events to avoid selecting wrong items
-					checkbox.Checked -= ItemSelected_Checked;
-					checkbox.Unchecked -= ItemSelected_Unchecked;
+					bool newValue = FileList.SelectedItems.Contains(item);
+					if (newValue != checkbox.IsChecked)
+					{
+						hasChanged = true;
 
-					checkbox.IsChecked = FileList.SelectedItems.Contains(item);
+						// Temporarily disable events to avoid selecting wrong items
+						checkbox.Checked -= ItemSelected_Checked;
+						checkbox.Unchecked -= ItemSelected_Unchecked;
 
-					checkbox.Checked += ItemSelected_Checked;
-					checkbox.Unchecked += ItemSelected_Unchecked;
+						checkbox.IsChecked = newValue;
+
+						checkbox.Checked += ItemSelected_Checked;
+						checkbox.Unchecked += ItemSelected_Unchecked;
+					}
 				}
-				UpdateCheckboxVisibility(container, checkbox?.IsPointerOver ?? false);
+				if (checkbox is null || hasChanged)
+					UpdateCheckboxVisibility(container, checkbox?.IsPointerOver ?? false);
 			}
 		}
 

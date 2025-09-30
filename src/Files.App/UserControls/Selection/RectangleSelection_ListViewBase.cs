@@ -23,6 +23,7 @@ namespace Files.App.UserControls.Selection
 		private Dictionary<object, System.Drawing.Rectangle> itemsPosition;
 		private List<object> prevSelectedItems;
 		private List<object> prevSelectedItemsDrag;
+		private System.Drawing.Rectangle? prevDragRect;
 		private ItemSelectionStrategy selectionStrategy;
 
 		public RectangleSelection_ListViewBase(ListViewBase uiElement, Rectangle selectionRectangle, SelectionChangedEventHandler selectionChanged = null)
@@ -69,13 +70,19 @@ namespace Files.App.UserControls.Selection
 				{
 					try
 					{
-						if (rect.IntersectsWith(item.Value))
+						var prevIntersects = prevDragRect?.IntersectsWith(item.Value);
+						var currIntersects = rect.IntersectsWith(item.Value);
+
+						if (!prevIntersects.HasValue || prevIntersects != currIntersects)
 						{
-							selectionStrategy.HandleIntersectionWithItem(item.Key);
-						}
-						else
-						{
-							selectionStrategy.HandleNoIntersectionWithItem(item.Key);
+							if (currIntersects)
+							{
+								selectionStrategy.HandleIntersectionWithItem(item.Key);
+							}
+							else
+							{
+								selectionStrategy.HandleNoIntersectionWithItem(item.Key);
+							}
 						}
 					}
 					catch (ArgumentException)
@@ -84,6 +91,8 @@ namespace Files.App.UserControls.Selection
 						itemsPosition.Remove(item);
 					}
 				}
+				prevDragRect = rect;
+
 				if (currentPoint.Position.Y > uiElement.ActualHeight - 20)
 				{
 					// Scroll down the list if pointer is at the bottom
@@ -103,8 +112,9 @@ namespace Files.App.UserControls.Selection
 					if (prevSelectedItemsDrag is null || !prevSelectedItemsDrag.SequenceEqual(currentSelectedItemsDrag))
 					{
 						// Trigger SelectionChanged event if the selection has changed
-						var removedItems = selectedItemsBeforeChange.Except(currentSelectedItemsDrag).ToList();
-						selectionChanged(sender, new SelectionChangedEventArgs(removedItems, currentSelectedItemsDrag));
+						var removedItems = ((IEnumerable<object>)(prevSelectedItemsDrag == null ? selectedItemsBeforeChange : prevSelectedItemsDrag)).Except(currentSelectedItemsDrag).ToList();
+						var addedItems = currentSelectedItemsDrag.Except(prevSelectedItemsDrag == null ? selectedItemsBeforeChange : prevSelectedItemsDrag).ToList();
+						selectionChanged(sender, new SelectionChangedEventArgs(removedItems, addedItems));
 						prevSelectedItemsDrag = currentSelectedItemsDrag;
 					}
 				}
@@ -125,6 +135,7 @@ namespace Files.App.UserControls.Selection
 
 			originDragPoint = new Point(e.GetCurrentPoint(uiElement).Position.X, e.GetCurrentPoint(uiElement).Position.Y); // Initial drag point relative to the topleft corner
 			prevSelectedItems = uiElement.SelectedItems.Cast<object>().ToList(); // Save current selected items
+			prevDragRect = null;
 
 			var verticalOffset = scrollViewer.VerticalOffset;
 			originDragPoint.Y += verticalOffset; // Initial drag point relative to the top of the list (considering scrolled offset)
@@ -213,6 +224,7 @@ namespace Files.App.UserControls.Selection
 			selectionState = SelectionState.Inactive;
 
 			prevSelectedItemsDrag = null;
+			prevDragRect = null;
 
 			e.Handled = true;
 		}
