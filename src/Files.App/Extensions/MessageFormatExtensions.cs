@@ -15,17 +15,6 @@ namespace Files.App.Extensions
 	public static class MessageFormatExtensions
 	{
 		/// <summary>
-		/// Resource map for accessing localized strings.
-		/// It is initialized with the main resource map of the application's resources and the subtree "Resources".
-		/// </summary>
-		private static readonly ResourceMap _resourcesTree = new ResourceManager().MainResourceMap.TryGetSubtree("Resources");
-
-		/// <summary>
-		/// Cache for the _resourcesTree to prevent doing expensive lookups very quickly.
-		/// </summary>
-		private static readonly ConcurrentDictionary<string, string> _resourcesTreeCache = new();
-
-		/// <summary>
 		/// CultureInfo based on the application's primary language override.
 		/// It is initialized with the selected language of the application.
 		/// </summary>
@@ -83,7 +72,7 @@ namespace Files.App.Extensions
 		/// <returns>The formatted localized resource string.</returns>
 		public static string GetLocalizedFormatResource(this string resourceKey, IReadOnlyDictionary<string, object?> pairs)
 		{
-			string? value = _resourcesTreeCache.GetOrAdd(resourceKey, (key) => _resourcesTree?.TryGetValue(key)?.ValueAsString);
+			string? value = resourceKey.GetLocalizedResource();
 
 			if (value is null)
 				return string.Empty;

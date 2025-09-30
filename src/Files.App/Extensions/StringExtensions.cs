@@ -97,14 +97,7 @@ namespace Files.App.Extensions
 
 		public static string GetLocalizedResource(this string resourceKey)
 		{
-			if (cachedResources.TryGetValue(resourceKey, out var value))
-			{
-				return value;
-			}
-
-			value = resourcesTree?.TryGetValue(resourceKey)?.ValueAsString;
-
-			return cachedResources[resourceKey] = value ?? string.Empty;
+			return cachedResources.GetOrAdd(resourceKey, (key) => resourcesTree?.TryGetValue(key)?.ValueAsString) ?? string.Empty;
 		}
 	}
 }
